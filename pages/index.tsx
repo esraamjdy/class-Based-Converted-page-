@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   TextField,
@@ -89,93 +89,86 @@ async function getData(url: string): Promise<any> {
   }
 }
 
-class Home extends React.Component<{}, { searchQuery: string; data: any[]; filteredData: any[] }>{
-  constructor(props: {}) {
-    super(props);
-    this.state = {
-      searchQuery: "",
-      data: [],
-      filteredData: [],
+const Home : React.FC = () =>{
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [data, setData] = useState<any[]>([]);
+  const [filteredData, setFilteredData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const url =
+        "https://api.fakend.fyi/dV5GgoIEpnViuZnouKak/boATCJtvIeeQyovnLcim/organisation";
+      const result = await getData(url);
+      if (result) {
+        setData(result.payload.data);
+        setFilteredData(result.payload.data);
+      }
     };
-  }
-
-  async componentDidMount() {
-    const url = "https://api.fakend.fyi/dV5GgoIEpnViuZnouKak/boATCJtvIeeQyovnLcim/organisation";
-    const data = await getData(url);
-    const fetchedData = data.payload.data;
-    this.setState({ data: fetchedData, filteredData: fetchedData });
-    
-  }
-
-  handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const searchQuery = event.target.value.toLowerCase();
-
-    const { data } = this.state;
-
-    const filteredData = data.filter((row) =>
-      Object.values(row).some((value) =>
-        value.toString().toLowerCase().includes(searchQuery)
+    fetchData();
+  }, []);
+  
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const query = event.target.value.toLowerCase();
+    setSearchQuery(query);
+    setFilteredData(
+      data.filter((row) =>
+        Object.values(row).some((value) =>
+          value.toString().toLowerCase().includes(query)
+        )
       )
     );
-    this.setState({ searchQuery, filteredData });
-    
   };
+  return (
+    <>
+      <Typography variant="h4" gutterBottom>
+        Organisationen
+      </Typography>
+      <Typography
+        variant="subtitle1"
+        gutterBottom
+        style={{ fontSize: "1rem", fontWeight: "lighter", color: "gray" }}
+      >
+        Subhead Optional: Angaben zur Organisation
+      </Typography>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
+        <TextField
+          label="Suche"
+          variant="outlined"
+          style={{ width: "300px" }}
+          value={searchQuery}
+          onChange={handleSearch}
+          InputProps={{
+            endAdornment: (
+              <>
+                {searchQuery && (
+                  <SearchIcon />
+                )}
+              </>
+            ),
+          }}
+        />
 
-  clearSearch = () => {
-    this.setState({ searchQuery: "", filteredData: this.state.data });
-  };
-
-  render() {
-    return (
-      <>
-        <Typography variant="h4" gutterBottom>
-          Organisationen
-        </Typography>
-        <Typography
-          variant="subtitle1"
-          gutterBottom
-          style={{ fontSize: "1rem", fontWeight: "lighter", color: "gray" }}
-        >
-          Subhead Optional: Angaben zur Organisation
-        </Typography>
-        <Box sx={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
-          <TextField
-            label="Suche"
-            variant="outlined"
-            style={{ width: "300px" }}
-            value={this.state.searchQuery}
-            onChange={this.handleSearch}
-            InputProps={{
-              endAdornment: (
-                <>
-                  {this.state.searchQuery && (
-                    <SearchIcon />
-                  )}
-                </>
-              ),
-            }}
-          />
-
-        </Box>
-        <Paper sx={{ height: "auto", width: "100%" }}>
-          <DataGrid
-            rows={this.state.filteredData || []}
-            columns={columns}
-            initialState={{
-              pagination: {
-                paginationModel: {
-                  pageSize: 10,
-                },
+      </Box>
+      <Paper sx={{ height: "auto", width: "100%" }}>
+        <DataGrid
+          rows={filteredData || []}
+          columns={columns}
+          initialState={{
+            pagination: {
+              paginationModel: {
+                pageSize: 10,
               },
-            }}
-            pageSizeOptions={[5]}
-            checkboxSelection
-            disableRowSelectionOnClick
-          />
-        </Paper>
-      </>
-    );
-  }
+            },
+          }}
+          pageSizeOptions={[5]}
+          checkboxSelection
+          disableRowSelectionOnClick
+        />
+      </Paper>
+    </>
+  );
+
 }
 
 export default Home;
