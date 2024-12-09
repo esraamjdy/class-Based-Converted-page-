@@ -1,8 +1,5 @@
 import React from "react";
-import {
-  DataGrid,
-  GridToolbar,
-} from "@mui/x-data-grid";
+
 import {
   TextField,
   Paper,
@@ -11,10 +8,17 @@ import {
   Chip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import { PencilSimple, CopySimple, Trash, CheckCircle, Warning } from "phosphor-react";
+import { 
+  PencilSimple, 
+  CopySimple, 
+  Trash, 
+  CheckCircle, 
+  Warning 
+} from "phosphor-react";
 import AvTimerOutlinedIcon from "@mui/icons-material/AvTimerOutlined";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
-const columns = [
+const columns : GridColDef[] = [
   { field: "id", headerName: "K-Nr.", flex: 1 },
   { field: "company", headerName: "Firma", flex: 2 },
   { field: "address", headerName: "Adresse", flex: 2 },
@@ -23,6 +27,7 @@ const columns = [
     field: "tags",
     headerName: "Tags",
     flex: 3,
+
     renderCell: (params) =>
       params.row.tags.map((tag, index) => (
         <Chip
@@ -46,7 +51,7 @@ const columns = [
       } else if (status === "Bewilligung abgelehnt") {
         icon = <Warning size={20} style={{ color: "red" }} />;
       } else if (status === "Bewilligung ausstehend") {
-        icon = <AvTimerOutlinedIcon size={20} style={{ color: "orange" }} />;
+        icon = <AvTimerOutlinedIcon  style={{ color: "orange", fontSize:"20px" }} />;
       }
       return (
         <div style={{ display: "flex", alignItems: "center" }}>
@@ -70,7 +75,7 @@ const columns = [
   },
 ];
 
-async function getData(url) {
+async function getData(url: string): Promise<any> {
   try {
     const response = await fetch(url);
     if (!response.ok) {
@@ -84,8 +89,8 @@ async function getData(url) {
   }
 }
 
-class Home extends React.Component {
-  constructor(props) {
+class Home extends React.Component<{}, { searchQuery: string; data: any[]; filteredData: any[] }>{
+  constructor(props: {}) {
     super(props);
     this.state = {
       searchQuery: "",
@@ -97,27 +102,23 @@ class Home extends React.Component {
   async componentDidMount() {
     const url = "https://api.fakend.fyi/dV5GgoIEpnViuZnouKak/boATCJtvIeeQyovnLcim/organisation";
     const data = await getData(url);
-    if (data && data.payload && Array.isArray(data.payload.data)) {
-      const fetchedData = data.payload.data;
-      this.setState({ data: fetchedData, filteredData: fetchedData });
-    } else {
-      console.error("Unexpected data format:", data);
-    }
+    const fetchedData = data.payload.data;
+    this.setState({ data: fetchedData, filteredData: fetchedData });
+    
   }
 
-  handleSearch = (event) => {
+  handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const searchQuery = event.target.value.toLowerCase();
+
     const { data } = this.state;
-    if (Array.isArray(data)) {
-      const filteredData = data.filter((row) =>
-        Object.values(row).some((value) =>
-          value.toString().toLowerCase().includes(searchQuery)
-        )
-      );
-      this.setState({ searchQuery, filteredData });
-    } else {
-      console.error("Data is not an array:", data);
-    }
+
+    const filteredData = data.filter((row) =>
+      Object.values(row).some((value) =>
+        value.toString().toLowerCase().includes(searchQuery)
+      )
+    );
+    this.setState({ searchQuery, filteredData });
+    
   };
 
   clearSearch = () => {
@@ -154,18 +155,22 @@ class Home extends React.Component {
               ),
             }}
           />
+
         </Box>
         <Paper sx={{ height: "auto", width: "100%" }}>
           <DataGrid
             rows={this.state.filteredData || []}
             columns={columns}
-            pageSize={5}
-            rowsPerPageOptions={[5, 10]}
+            initialState={{
+              pagination: {
+                paginationModel: {
+                  pageSize: 10,
+                },
+              },
+            }}
+            pageSizeOptions={[5]}
             checkboxSelection
-            autoHeight
-            components={{ Toolbar: GridToolbar }}
-            initialState={{ pagination: { paginationModel: { pageSize: 10  } } }}
-            getRowId={(row) => row.id}
+            disableRowSelectionOnClick
           />
         </Paper>
       </>
